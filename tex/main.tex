@@ -24,6 +24,7 @@
 \newtheorem{lemma}[theorem]{Lemma}
 \newtheorem{definition}{Definition}
 \newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{remark}{Remark}
 
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\Rmax}{\mathbb{R}_{\max}}
@@ -153,7 +154,14 @@ P_X(y) = \max\{z \in \text{conv}_{\max}(X) : z \leq y\}
 \todo[inline,color=red!30]{SG. This is the projection on a cone, not on a convex set, perhaps we need to speak only of cones (modulo passing to the projective space), then this is ok. For a convex set, the max may be taken over a nonempty set}
 Tropical convexity generalizes the idea of conventional convexity to the max-plus setting. A tropical convex hull contains all tropical linear combinations of points. The projection finds the ``closest'' point in the convex hull that doesn't exceed our target point in any coordinate.
 
+We also define diagonal-free ``projections'' \cite{gaubert2011}:
+\begin{align}
+P_X^{\text{DF}}(y)_i = \max_{1 \leq j \leq p} \left\{X_{ij} + \min_{k \neq i} (-X_{kj} + y_k)\right\}.
+\end{align}
+Note that both $P$ and $P^\text{DF}$ have identical fixed-point sets.
+
 These tropical projections will play a central role in our classification framework. We will use them to build class-specific operators that characterize the separability of data.
+
 
 \section{Spectral Framework for Tropical SVMs}\label{sec:spectral}
 
@@ -176,8 +184,10 @@ Equivalently, $\rho(T)$ is the smallest value $\lambda$ for which there exists a
 \paragraph{Constructing the Classification Operator.}
 Consider a classification problem with $K$ classes, each represented by a set of points $X^1,\dots,X^K \subset \trop^d$. We define an operator $T^k$ for each class $k$ by taking the tropical projection onto the convex hull of points in that class:
 \[
-T^k(x) = P_{X^k}(x)
+T^k(x) = P_{X^k}^{\text{DF}}(x)
 \]
+
+Note that here we rather use the diagonal-free version as it allows a unified approach for both the separable and non-separable cases, but the non diagonal-free version of the operators can be used in the separable case.
 
 We then combine these operators into a single classification operator $T$ defined coordinatewise as:
 \[
@@ -186,19 +196,21 @@ T(x)_i = \operatorname{\max}_2\{T^1(x)_i, \dots, T^K(x)_i\}
 where $\operatorname{\max}_2$ denotes the second-largest value among the outputs. For binary classification ($K=2$), this simplifies to $T(x)=\min\{T^1(x), T^2(x)\}$.
 
 \paragraph{Main Theorem: Spectral Separability.}
-Our central result establishes the connection between tropical separability and the spectral radius:\todo[inline]{SG: does not some part of the theorem (the last one?) requires to use the diagonal free variant? }
+Our central result establishes the connection between tropical separability and the spectral radius:
 
 \begin{theorem}[Spectral Separability Criterion]\label{thm:spectral_separability}
-Let $X^1,\ldots,X^K \subset \trop^d$ be labeled point sets and let $T$ be the classification operator defined above. Then:
+Let $X^1,\ldots,X^K \subset \trop^d$ be labeled point sets and let $T$ and $T_{\text{DF}}$ be the classification operators defined above. Then:
 
-(1) \textit{Separability Criterion:} The data are tropically separable by a hyperplane if and only if $\rho(T) < 0$.
+(1) \textit{Separability Criterion:} The data are tropically separable by a hyperplane if and only if $\rho(T) < 0$ .
 
-(2) \textit{Margin Optimality:} In the separable case, the maximum achievable margin equals $-\rho(T)$.
+(2) \textit{Margin Optimality:} In the separable case, the maximum achievable margin equals $-\rho(T) $.
 
 (3) \textit{Soft-Margin Interpretation:} For binary classification with overlapping data, $\rho(T)$ is positive and quantifies the minimal perturbation needed to achieve separability.
 
-Moreover, both $\rho(T)$ and an associated apex vector $a$ satisfying $T(a) = \rho(T)+a$ can be computed in pseudo-polynomial time using mean-payoff game algorithms (see Section~\ref{sec:algorithm}).
+Moreover, both $\rho(T)$ and corresponding apex vector $a$ satisfying $T(a) = \rho(T)+a$ can be computed in pseudo-polynomial time using mean-payoff game algorithms (see Section~\ref{sec:algorithm}).
+ 
 \end{theorem}
+
 
 \emph{Proof Sketch.}
 The proof follows two main directions. First, if there exists a tropical hyperplane $\mathcal{H}_a$ separating the classes with margin $\gamma>0$, then using the monotonicity and homogeneity properties of the operator, we can show $T(a) \leq a - \gamma$. This implies $\rho(T) \leq -\gamma < 0$.
@@ -208,6 +220,10 @@ Conversely, if $\rho(T)<0$, we can find an eigenvector $a$ satisfying $T(a)=\rho
 For the non-separable case, we show that $\rho(T)$ quantifies the minimum perturbation required to make the data separable by constructing an explicit perturbation of magnitude $\rho(T)$.
 
 A complete proof is provided in Appendix~\ref{appendix:proofs}.
+
+\begin{remark} Lemmas used in the appendix for the proof allow us to derive results of theorem $1$ from slightly lighter assumptions. Namely, results $(1)$ and $(2)$ hold if we define $T$ with the non diagonal-free projections. We can also build a separating tropical hyperplane with margin at least $-\rho(T')$ if $T'$ is of the form  $T'(x)_i = \operatorname{\max}_2\{T'^1(x)_i, \dots, T'^K(x)_i\}$ with $T'^1, \ldots, T'^K$ being only Shapley operators and $-\rho(T)<0$, as long as $S(T') = S(T)$.
+
+
 
 \paragraph{Benefits of the Spectral Approach.} 
 Our framework significantly advances the tropical SVM foundation established by Gärtner and Jaggi \cite{gartner2008}. Their work showed that tropical SVM could be formulated as finding a point of maximum margin within a tropical polytope defined by sector constraints, but required exhaustive exploration of sector assignments—leading to exponential complexity.
@@ -393,13 +409,13 @@ TBD
 We provide a complete proof of our main result on spectral separability.
 
 \begin{lemma}\label{lemma:hyperplane_to_operator}
-If the hyperplane $\mathcal{H}_a$ separates point clouds $X^1,\ldots,X^K$ with a margin of at least $\gamma > 0$, then $T(a) \leq -\gamma + a$.
+If the hyperplane $\mathcal{H}_a$ separates point clouds $X^1,\ldots,X^K$ with a margin of at least $\gamma > 0$, then $T(a) \leq -\gamma + a$ and $T_{\text{DF}}(a) \leq -\gamma + a$.
 \end{lemma}
 
 \begin{proof}
 Consider two different classes $k$ and $\ell$. Let $I^k$ denote the set of coordinates assigned to class $k$. For any point $x \in X^k$, the margin condition implies
 \begin{align}
-d_H(x, S^{\ell}) = \max_i(x_i - a_i) - \max_{j \in I^{\ell}}(x_j - a_j) \geq \gamma.
+d_H(x, S^{\ell}) = \max_j(x_j - a_j) - \max_{i \in I^{\ell}}(x_i - a_i) \geq \gamma.
 \end{align}
 
 This can be rewritten as: for all $i \in I^{\ell}$,
@@ -407,9 +423,11 @@ This can be rewritten as: for all $i \in I^{\ell}$,
 x_i - a_i \leq \max_j(x_j - a_j) - \gamma.
 \end{align}
 
+Note that $ \max_j(x_j - a_j) = \max_{j\neq i}(x_j - a_j) $ since $\gamma >0$.
+
 Taking the maximum over all $x \in X^k$, we get
 \begin{align}
-\max_{x \in X^k}(x_i - a_i) \leq \max_{x \in X^k}(\max_j(x_j - a_j)) - \gamma.
+\max_{x \in X^k}(x_i - a_i) \leq \max_{x \in X^k}(\max_{j\neq i}(x_j - a_j)) - \gamma.
 \end{align}
 
 By the definition of $T^k$, this implies
@@ -417,14 +435,16 @@ By the definition of $T^k$, this implies
 T^k(a)_i \leq -\gamma + a_i.
 \end{align}
 
+
 Since this holds for all $i \in I^{\ell}$ and all classes $k \neq \ell$, we have $T(a)_i \leq -\gamma + a_i$ for all $i$, which gives us $T(a) \leq -\gamma + a$.
 \end{proof}
 
 \begin{lemma}\label{lemma:operator_to_hyperplane}
-If $\rho(T) < 0$, then there exists a hyperplane $\mathcal{H}_a$ that separates the data with a margin of at least $-\rho(T)$.
+If $\rho(T_{\text{DF}}) < 0$, then there exists a hyperplane $\mathcal{H}_a$ that separates the data with a margin of at least $-\rho(T_{\text{DF}})$. The result also holds if we replace $T_{\text{DF}}$ by any operator of the form $\bar{T} (e.g $T$).
 \end{lemma}
 
 \begin{proof}
+Let $\bar{T}$ be a Shapley operator with negative 
 Since $\rho(T) < 0$, there exists $a \in \R^d$ such that $T(a) = \rho(T) + a$. We define the sectors as
 \begin{align}
 I^k = \{i : T^k(a)_i > \rho(T) + a_i\}.
@@ -449,7 +469,9 @@ Finally, for the margin, consider $x \in X^k$ and sector $S^{\ell}$ with $\ell \
 d_H(x, S^{\ell}) = \max_j(x_j - a_j) - \max_{i \in I^{\ell}}(x_i - a_i).
 \end{align}
 
+
 Using the inequalities derived above, we get $d_H(x, S^{\ell}) \geq -\rho(T)$.
+
 \end{proof}
 
 For any Shapley operator $T$, we define its fixed-point set as $S(T) = \{x \in \trop^d : x \leq T(x)\}$. An important property is that any tropically convex set $V$ can be written as $V = S(P_V)$. 
